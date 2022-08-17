@@ -1,11 +1,9 @@
 ﻿param (
-$serverName = "powerbi://api.powerbi.com/v1.0/myorg/EnhancedRefreshAPI_LogicApp"
+$serverName = "powerbi://api.powerbi.com/v1.0/myorg/CustomPartitioning"
 , $databaseName = "Contoso-Partitioned"
 , $years = (2018..2022)
 )
-
 $ErrorActionPreference = "Stop"
-$VerbosePreference = "Continue"
 
 $currentPath = (Split-Path $MyInvocation.MyCommand.Definition -Parent)
 
@@ -24,17 +22,16 @@ foreach ($year in $years)
             ;
             Type = "M"
             ;
-            Query = "let
-                    Source = Sql.Database(Server, Database),
-                    dbo_Sales = Source{[Schema=""dbo"",Item=""Sales""]}[Data],
-                    #""Removed Other Columns"" = Table.SelectColumns(dbo_Sales,{""Order Date"", ""Delivery Date"", ""CustomerKey"", ""StoreKey"", ""ProductKey"", ""Quantity"", ""Unit Price"", ""Net Price"", ""Unit Cost"", ""Currency Code"", ""Exchange Rate""}),
-                    #""Filtered Rows"" = Table.SelectRows(#""Removed Other Columns"", each  Date.Year([Order Date]) = $year and Date.Month([Order Date]) = $month)
-                    in
-                    #""Filtered Rows"""
+            Query = "
+            let
+                Source = Sql.Database(Server, Database),
+                dbo_Sales = Source{[Schema=""dbo"",Item=""Sales""]}[Data],
+                #""Removed Other Columns"" = Table.SelectColumns(dbo_Sales,{""Order Date"", ""Delivery Date"", ""CustomerKey"", ""StoreKey"", ""ProductKey"", ""Quantity"", ""Unit Price"", ""Net Price"", ""Unit Cost"", ""Currency Code"", ""Exchange Rate""}),
+                #""Filtered Rows"" = Table.SelectRows(#""Removed Other Columns"", each  Date.Year([Order Date]) = $year and Date.Month([Order Date]) = $month)
+            in
+            #""Filtered Rows"""
             }
     }
 }
 
-$results = Add-ASTablePartition -serverName $serverName -databaseName $databaseName -partitions $partitions -removeDefaultPartition
-
-$results
+Add-ASTablePartition -serverName $serverName -databaseName $databaseName -partitions $partitions -removeDefaultPartition

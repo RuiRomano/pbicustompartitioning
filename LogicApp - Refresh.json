@@ -1,0 +1,190 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Condition": {
+                "actions": {},
+                "else": {
+                    "actions": {
+                        "Terminate": {
+                            "inputs": {
+                                "runError": {
+                                    "message": "@{body('GetRefreshStatus')}"
+                                },
+                                "runStatus": "Failed"
+                            },
+                            "runAfter": {},
+                            "type": "Terminate"
+                        }
+                    }
+                },
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "@body('GetRefreshStatus')?['status']",
+                                "Completed"
+                            ]
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Until": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "If"
+            },
+            "ExecuteRefreshAPI": {
+                "inputs": {
+                    "authentication": {
+                        "audience": "https://analysis.windows.net/powerbi/api",
+                        "type": "ManagedServiceIdentity"
+                    },
+                    "body": {
+                        "commitMode": "@body('Refresh_Parameters')?['RefreshOptions']?['commitMode']",
+                        "maxParallelism": "@body('Refresh_Parameters')?['RefreshOptions']?['maxParallelism']",
+                        "objects": "@body('Refresh_Parameters')?['RefreshObjects']",
+                        "retryCount": "@body('Refresh_Parameters')?['RefreshOptions']?['retryCount']",
+                        "type": "@body('Refresh_Parameters')?['RefreshOptions']?['type']"
+                    },
+                    "method": "POST",
+                    "uri": "https://api.powerbi.com/v1.0/myorg/groups/@{body('Refresh_Parameters')?['WorkspaceId']}/datasets/@{body('Refresh_Parameters')?['DatasetId']}/refreshes"
+                },
+                "operationOptions": "DisableAsyncPattern",
+                "runAfter": {
+                    "Refresh_Parameters": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Http"
+            },
+            "Refresh_Parameters": {
+                "inputs": {
+                    "content": {
+                        "DatasetId": "db060979-5667-4cd9-8197-606d09b56cb1",
+                        "RefreshObjects": [
+                            {
+                                "partition": "Sales_@{formatDateTime(utcNow(), 'yyyy_MM')}",
+                                "table": "Sales"
+                            },
+                            {
+                                "partition": "Sales_@{formatDateTime(subtractFromTime(utcNow(), 1, 'Month'), 'yyyy_MM')}",
+                                "table": "Sales"
+                            },
+                            {
+                                "partition": "Sales_@{formatDateTime(subtractFromTime(utcNow(), 2, 'Month'), 'yyyy_MM')}",
+                                "table": "Sales"
+                            }
+                        ],
+                        "RefreshOptions": {
+                            "commitMode": "transactional",
+                            "maxParallelism": 2,
+                            "retryCount": 1,
+                            "type": "full"
+                        },
+                        "WorkspaceId": "3abcd67b-ea43-4bb1-8be4-f31d106f0b70"
+                    },
+                    "schema": {
+                        "properties": {
+                            "DatasetId": {
+                                "type": "string"
+                            },
+                            "RefreshObjects": {
+                                "items": {
+                                    "properties": {
+                                        "table": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "table"
+                                    ],
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            },
+                            "RefreshOptions": {
+                                "properties": {
+                                    "commitMode": {
+                                        "type": "string"
+                                    },
+                                    "maxParallelism": {
+                                        "type": "integer"
+                                    },
+                                    "retryCount": {
+                                        "type": "integer"
+                                    },
+                                    "type": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "WorkspaceId": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "runAfter": {},
+                "type": "ParseJson"
+            },
+            "Until": {
+                "actions": {
+                    "Delay_for_10s": {
+                        "inputs": {
+                            "interval": {
+                                "count": 10,
+                                "unit": "Second"
+                            }
+                        },
+                        "runAfter": {
+                            "GetRefreshStatus": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Wait"
+                    },
+                    "GetRefreshStatus": {
+                        "inputs": {
+                            "authentication": {
+                                "audience": "https://analysis.windows.net/powerbi/api",
+                                "type": "ManagedServiceIdentity"
+                            },
+                            "method": "GET",
+                            "uri": "https://api.powerbi.com/v1.0/myorg/groups/@{body('Refresh_Parameters')?['WorkspaceId']}/datasets/@{body('Refresh_Parameters')?['DatasetId']}/refreshes/@{outputs('ExecuteRefreshAPI')['headers']['RequestId']}"
+                        },
+                        "runAfter": {},
+                        "type": "Http"
+                    }
+                },
+                "expression": "@or(equals(body('GetRefreshStatus')?['status'], 'Completed'), equals(body('GetRefreshStatus')?['status'], 'Failed'))",
+                "limit": {
+                    "count": 10,
+                    "timeout": "PT1H"
+                },
+                "runAfter": {
+                    "ExecuteRefreshAPI": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Until"
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "parameters": {},
+        "triggers": {
+            "manual": {
+                "inputs": {
+                    "method": "GET"
+                },
+                "kind": "Http",
+                "type": "Request"
+            }
+        }
+    },
+    "parameters": {}
+}

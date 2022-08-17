@@ -1,11 +1,11 @@
 ﻿#Requires -Modules @{ ModuleName="MicrosoftPowerBIMgmt"; ModuleVersion="1.2.1026" }
 
 param(
-    $workspaceId = "3abcd67b-ea43-4bb1-8be4-f31d106f0b70"
+    $workspaceId = "f66792d0-e680-46e8-a377-7184dd543d07"
     ,
-    $datasetId = "db060979-5667-4cd9-8197-606d09b56cb1"
+    $datasetId = "6513a3ea-1a12-4466-b35d-fc29ba976a1a"
     ,
-    $currentDate = [datetime]"2019-01-01"
+    $currentDate = [datetime]::Today #[datetime]"2019-01-01"
 )
 
 $ErrorActionPreference = "Stop"

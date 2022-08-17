@@ -1,5 +1,11 @@
+# Deployment Steps
 - Deploy the sample [PBIX](./Contoso-Partitioned.pbix) on a workspace 
 - Run [PBIX](./Script - CreatePartitions.ps1) to create the partitions
+- Deploy the [Logic App](./LogicApp - Refresh.json) to an Azure Subscription
+- Enable Logic App Managed Identity
+- Authorize the Managed Identity to connect to Power BI (workspace & 'Allow service principals to use Power BI APIs' tenant setting)
+- Execute the logic app to refresh your dataset
+
 
 # Script - CreatePartitions.ps1
 

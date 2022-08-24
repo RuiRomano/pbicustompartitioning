@@ -1,3 +1,5 @@
+Blogpost: https://www.linkedin.com/pulse/approach-custom-partition-your-power-bi-dataset-refresh-rui-romano/?trackingId=0AVSrhfHS6ihl%2F%2B1SeePwA%3D%3D
+
 # Deployment Steps
 - Deploy the sample [PBIX](./Contoso-Partitioned.pbix) on a workspace 
 - Run [PBIX](./Script - CreatePartitions.ps1) to create the partitions
